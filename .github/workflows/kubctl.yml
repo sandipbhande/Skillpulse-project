@@ -19,7 +19,7 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
-          echo "${KUBECONFIG}" > ~/.kube/config
+          echo "${KUBECONFIG}" | base64 -d > ~/.kube/config
         env:
           KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
