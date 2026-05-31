@@ -16,18 +16,19 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
 
-      - name: Create kubeconfig
+      - name: Setup kubeconfig
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
-          kubectl config use-context kind-skillpulse
 
-      - name: Verify context
-        run: |
+          echo "=== CONTEXT LIST ==="
           kubectl config get-contexts
+
+          echo "=== SET CONTEXT ==="
+          kubectl config use-context kind-skillpulse || true
+
           kubectl config current-context
 
-      - name: Deploy to K8s
-        run: |
-          kubectl apply -f k8s/
+      - name: Deploy
+        run: kubectl apply -f k8s/
