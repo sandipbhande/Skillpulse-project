@@ -16,25 +16,23 @@ jobs:
       - name: Install kubectl
         uses: azure/setup-kubectl@v4
 
-      - name: Configure kubeconfig
+      - name: Setup kubeconfig
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
+          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
 
-      - name: Set kubeconfig path
-        run: echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
-
-      - name: Verify Cluster Connection
+      - name: Test Cluster
         run: |
-          kubectl config view
+          kubectl config current-context
           kubectl cluster-info
           kubectl get nodes
 
-      - name: Deploy Application
+      - name: Deploy App
         run: |
           kubectl apply -f k8s/
 
-      - name: Check Pods
+      - name: Verify Pods
         run: |
           kubectl get pods -A
