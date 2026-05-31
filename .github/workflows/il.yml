@@ -13,17 +13,20 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v4
+
       - name: Create kubeconfig
         run: |
           mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
+          export KUBECONFIG=$HOME/.kube/config
+          kubectl config use-context kind-skillpulse
 
-      - name: Show contexts
-        run: kubectl config get-contexts
-
-      - name: Use correct context
-        run: kubectl config current-context
+      - name: Verify context
+        run: |
+          kubectl config get-contexts
+          kubectl config current-context
 
       - name: Deploy to K8s
         run: |
