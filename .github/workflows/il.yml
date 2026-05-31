@@ -1,3 +1,4 @@
+
 name: Deploy to Kubernetes
 
 on:
@@ -22,13 +23,12 @@ jobs:
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
           export KUBECONFIG=$HOME/.kube/config
 
-          echo "=== CONTEXT LIST ==="
+          echo "== CONTEXTS =="
           kubectl config get-contexts
 
-          echo "=== SET CONTEXT ==="
-          kubectl config use-context kind-skillpulse || true
+          echo "== CURRENT CONTEXT =="
+          kubectl config current-context || true
 
-          kubectl config current-context
-
-      - name: Deploy
-        run: kubectl apply -f k8s/
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/
