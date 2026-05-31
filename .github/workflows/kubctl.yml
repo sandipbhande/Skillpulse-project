@@ -19,9 +19,9 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
-          cat <<EOF > ~/.kube/config
-          ${{ secrets.KUBECONFIG }}
-          EOF
+          echo "${KUBECONFIG}" > ~/.kube/config
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
 
       - name: Test Cluster Connection
         run: |
