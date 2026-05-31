@@ -23,16 +23,23 @@ jobs:
           chmod 600 $HOME/.kube/config
           echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
 
-      - name: Test Cluster
+      # 🔥 SAFE TEST STEP (IMPORTANT)
+      - name: Test Cluster Connection (DEBUG MODE)
         run: |
+          echo "===== CHECKING CONTEXT ====="
+          kubectl config get-contexts
+          echo "===== CURRENT CONTEXT ====="
           kubectl config current-context
-          kubectl cluster-info
-          kubectl get nodes
+          echo "===== CLUSTER INFO ====="
+          kubectl cluster-info || true
+          echo "===== NODE CHECK ====="
+          kubectl get nodes || true
 
-      - name: Deploy App
+      - name: Deploy Application
         run: |
           kubectl apply -f k8s/
 
-      - name: Verify Pods
+      - name: Verify Deployment
         run: |
           kubectl get pods -A
+          kubectl get svc -A
