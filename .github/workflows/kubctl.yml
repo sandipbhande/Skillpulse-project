@@ -19,12 +19,12 @@ jobs:
       - name: Configure kubeconfig
         run: |
           mkdir -p ~/.kube
-          echo "${KUBECONFIG}" | base64 -d > ~/.kube/config
-        env:
-          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > ~/.kube/config
+          chmod 600 ~/.kube/config
 
-      - name: Test Cluster Connection
+      - name: Verify Cluster Connection
         run: |
+          kubectl config view
           kubectl cluster-info
           kubectl get nodes
 
