@@ -1,4 +1,4 @@
-name: Kubernetes Deploy
+name: Deploy to Kubernetes
 
 on:
   push:
@@ -11,23 +11,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v2
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Setup kubeconfig
+      - name: Create kubeconfig
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBECONFIG_B64 }}" | base64 -d > $HOME/.kube/config
+          mkdir $HOME/.kube
+          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
-          echo "KUBECONFIG=$HOME/.kube/config" >> $GITHUB_ENV
 
-      - name: Deploy to Kubernetes Cluster
+      - name: Use context
+        run: |
+          kubectl config use-context octobay-api
+
+      - name: Deploy to K8s
         run: |
           kubectl apply -f k8s/
-
-      - name: Verify Deployment
-        run: |
-          kubectl get pods -A
-          kubectl get svc -A
