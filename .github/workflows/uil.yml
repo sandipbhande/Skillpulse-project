@@ -15,13 +15,15 @@ jobs:
 
       - name: Create kubeconfig
         run: |
-          mkdir $HOME/.kube
+          mkdir -p $HOME/.kube
           echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
           chmod 600 $HOME/.kube/config
 
-      - name: Use context
-        run: |
-          kubectl config use-context octobay-api
+      - name: Show contexts
+        run: kubectl config get-contexts
+
+      - name: Use correct context
+        run: kubectl config current-context
 
       - name: Deploy to K8s
         run: |
