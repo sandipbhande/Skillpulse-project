@@ -1,34 +1,79 @@
-
-name: Deploy to Kubernetes
+name: Kubernetes Deployment
 
 on:
   push:
     branches:
+      - develop
       - main
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  validate:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v4
+      - name: Install Kustomize
+        uses: imranismail/setup-kustomize@v2
 
-      - name: Setup kubeconfig
+      - name: Validate Dev Manifests
+        run: kustomize build k8s/overlays/dev
+
+      - name: Validate Staging Manifests
+        run: kustomize build k8s/overlays/staging
+
+      - name: Validate Prod Manifests
+        run: kustomize build k8s/overlays/prod
+
+  deploy-dev:
+    needs: validate
+    if: github.ref == 'refs/heads/develop'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Kubeconfig
         run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 --decode > $HOME/.kube/config
-          export KUBECONFIG=$HOME/.kube/config
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_DEV }}" > ~/.kube/config
 
-          echo "== CONTEXTS =="
-          kubectl config get-contexts
+      - name: Deploy to Development
+        run: kubectl apply -k k8s/overlays/dev
 
-          echo "== CURRENT CONTEXT =="
-          kubectl config current-context || true
+  deploy-staging:
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
 
-      - name: Deploy to Kubernetes
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Kubeconfig
         run: |
-          kubectl apply -f k8s/
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" > ~/.kube/config
+
+      - name: Deploy to Staging
+        run: kubectl apply -k k8s/overlays/staging
+
+  deploy-prod:
+    needs: deploy-staging
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Kubeconfig
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PROD }}" > ~/.kube/config
+
+      - name: Deploy to Production
+        run: kubectl apply -k k8s/overlays/prod
