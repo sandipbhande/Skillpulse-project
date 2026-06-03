@@ -67,7 +67,7 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/skillpulse-backend:latest ./backend
 
       - name: Scan Backend Image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/skillpulse-backend:latest
           format: table
@@ -85,7 +85,7 @@ jobs:
           docker build -t ${{ secrets.DOCKER_USERNAME }}/skillpulse-frontend:latest ./frontend
 
       - name: Scan Frontend Image
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ secrets.DOCKER_USERNAME }}/skillpulse-frontend:latest
           format: table
