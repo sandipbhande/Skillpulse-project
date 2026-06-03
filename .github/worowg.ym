@@ -1,0 +1,38 @@
+gitops:
+    name: Update GitOps Repository
+    runs-on: ubuntu-latest
+    needs: docker
+
+    steps:
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          repository: sandip2025/skillpulse-gitops
+          token: ${{ secrets.GITOPS_TOKEN }}
+          path: gitops
+
+      - name: Update Manifest Images
+        run: |
+          # Updating the manifests using the unique GitHub Commit SHA instead of 'latest'
+          sed -i "s|image:.*skillpulse-backend.*|image: ${{ secrets.DOCKER_USERNAME }}/skillpulse-backend:${{ github.sha }}|g" gitops/k8s/backend-deployment.yaml
+          sed -i "s|image:.*skillpulse-frontend.*|image: ${{ secrets.DOCKER_USERNAME }}/skillpulse-frontend:${{ github.sha }}|g" gitops/k8s/frontend-deployment.yaml
+
+      - name: Commit and Push Changes
+        run: |
+          # Explicitly move into the cloned repository directory
+          cd gitops
+          
+          # Configure Git local to this repository
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Stage, check for changes, commit, and push
+          git add k8s/backend-deployment.yaml k8s/frontend-deployment.yaml
+          
+          if git diff --cached --quiet; then
+            echo "No changes detected in manifests. Skipping commit."
+            exit 0
+          else
+            git commit -m "chore(gitops): update image tags to ${{ github.sha }} [skip ci]"
+            git push origin main
+          fi
