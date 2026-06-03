@@ -3,8 +3,8 @@
 <img width="1155" height="551" alt="Capture3" src="https://github.com/user-attachments/assets/19002684-945f-4ef9-a57e-d78e2fb6de76" />
 <img width="1885" height="826" alt="Capture2" src="https://github.com/user-attachments/assets/c901bf14-e374-4b85-bb7b-37c318c160a0" />
 <img width="1155" height="551" alt="Capture" src="https://github.com/user-attachments/assets/a2be3cd3-9e53-4281-893a-2f1c7443c0b6" />
+<img width="1470" height="824" alt="Capture10" src="https://github.com/user-attachments/assets/8e522463-24dc-4e33-ae7e-5dfa17fc4acb" />
 
-Quick commands:
 
 Build Docker images:
 
