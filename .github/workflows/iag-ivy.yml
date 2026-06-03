@@ -22,10 +22,34 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
 
+  owasp:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    needs: sonarqube
+
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: SkillPulse
+          path: .
+          format: HTML
+
+      - name: Upload OWASP Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-report
+          path: reports
+
   docker:
     name: Build, Scan and Push Images
     runs-on: ubuntu-latest
-    needs: sonarqube
+    needs:
+      - sonarqube
+      - owasp
 
     steps:
       - name: Checkout Source
@@ -42,15 +66,14 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/skillpulse-backend:latest ./backend
 
-      - name: Trivy Scan Backend
-        uses: aquasecurity/trivy-action@v0.36.0
+      - name: Scan Backend Image
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: '${{ secrets.DOCKER_USERNAME }}/skillpulse-backend:latest'
-          format: 'table'
-          exit-code: '0'
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/skillpulse-backend:latest
+          format: table
+          exit-code: 0
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'HIGH,CRITICAL'
+          severity: HIGH,CRITICAL
 
       - name: Push Backend Image
         run: |
@@ -61,15 +84,14 @@ jobs:
         run: |
           docker build -t ${{ secrets.DOCKER_USERNAME }}/skillpulse-frontend:latest ./frontend
 
-      - name: Trivy Scan Frontend
-        uses: aquasecurity/trivy-action@v0.36.0
+      - name: Scan Frontend Image
+        uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: '${{ secrets.DOCKER_USERNAME }}/skillpulse-frontend:latest'
-          format: 'table'
-          exit-code: '0'
+          image-ref: ${{ secrets.DOCKER_USERNAME }}/skillpulse-frontend:latest
+          format: table
+          exit-code: 0
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'HIGH,CRITICAL'
+          severity: HIGH,CRITICAL
 
       - name: Push Frontend Image
         run: |
@@ -101,5 +123,4 @@ jobs:
             Commit: ${{ github.sha }}
             Workflow: ${{ github.workflow }}
 
-            Result: SUCCESS
-
+            Result: ${{ needs.docker.result }}
