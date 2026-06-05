@@ -1,0 +1,72 @@
+name: Update Image Tag
+
+on:
+  repository_dispatch:
+    types:
+      - update-image
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    name: Update Deployment Image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout GitOps Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate Payload
+        run: |
+          IMAGE="${{ github.event.client_payload.image }}"
+
+          if [ -z "$IMAGE" ]; then
+            echo "ERROR: Image value not provided"
+            exit 1
+          fi
+
+          echo "Image received: $IMAGE"
+
+      - name: Verify Deployment File
+        run: |
+          if [ ! -f deployment.yaml ]; then
+            echo "ERROR: deployment.yaml not found"
+            exit 1
+          fi
+
+      - name: Update Image Tag
+        run: |
+          set -euo pipefail
+
+          IMAGE="${{ github.event.client_payload.image }}"
+
+          echo "Updating deployment image to: $IMAGE"
+
+          sed -i -E "s|image:[[:space:]]*.*|image: ${IMAGE}|g" deployment.yaml
+
+          echo "Deployment file after update:"
+          cat deployment.yaml
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Commit Changes
+        run: |
+          git add deployment.yaml
+
+          if git diff --cached --quiet; then
+            echo "No changes detected. Skipping commit."
+            exit 0
+          fi
+
+          git commit -m "chore: update image to ${{ github.event.client_payload.image }}"
+
+      - name: Push Changes
+        run: |
+          git pull --rebase origin main
+          git push origin HEAD:main
